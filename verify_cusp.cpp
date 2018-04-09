@@ -19,7 +19,6 @@ void check(int inequalities, char* where)
     }
 }
 
-// TODO: Move to a codes file
 // Our compact parameter space has the following bounds:
 // 0. |lox_sqrt| >= 1 
 // 1. 
@@ -73,45 +72,87 @@ void verify_out_of_bounds(char* where, char bounds_code)
     }
 }
 
-// Check that the matrix is NOT of the forms
-// 1 b  OR  -1  b
-// 0 1       0 -1
-// anywhere in the box
 const int not_parabolic_at_inf(const SL2ACJ&x) {
+    // Check that the matrix is NOT of the forms
+    // 1 b  OR  -1  b
+    // 0 1       0 -1
+    // anywhere in the box
     return absLB(x.c) > 0
         || ((absLB(x.a-1) > 0 ||  absLB(x.d-1) > 0) && (absLB(x.a+1) > 0 || absLB(x.d+1) > 0));
 }
 
-// Check that the matrix is NOT of the forms
-// 1 0  OR  -1  0
-// 0 1       0 -1
-// anywhere in the box
 const int not_identity(const SL2ACJ&x) {
+    // Check that the matrix is NOT of the forms
+    // 1 0  OR  -1  0
+    // 0 1       0 -1
+    // anywhere in the box
     return absLB(x.b) > 0
         || absLB(x.c) > 0
         || ((absLB(x.a-1) > 0 || absLB(x.d-1) > 0) && (absLB(x.a+1) > 0 || absLB(x.d+1) > 0));
 }
 
-// TODO: Move to a codes file
-// Conditions checked:
-//  1) word is not a parabolic fixing infinity anywhere in the box
-//  2) word(infinity_horoball) intersects infinity_horoball
+const int large_horoball(const SL2ACJ&x, const ACJ&loxodromic_sqrt) {
+    // The infinity horoball has height t = 1/|loxodromic_sqrt|. An SL2C matrix
+    // a b
+    // c d
+    // Takes an infinity horoball of height t to a horoball of height 1/(t |c|^2)
+    // We want 1/(t |c|^2) > t. With t = 1/|loxodromic_sqrt|, this gives
+    // |c / loxodromic_sqrt| < 1.
+    return absUB( x.c / loxodromic_sqrt ) < 1;
+}
+
 void verify_killed(char* where, char* word)
 {
+    // Conditions checked:
+    //  1) word is not a parabolic fixing infinity anywhere in the box
+    //  2) word(infinity_horoball) intersects infinity_horoball
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
 
     check(not_parabolic_at_inf(w), where);
+	check(large_horoball(w, params.loxodromic_sqrt), where);
+}
 
-    // The infinity horoball has heigh t = 1/|lox_sqrt|. An SL2C matrix
-    // a b
-    // c d
-    // Takes an infinity horoball of height t to a horoball of height 1/(t |c|^2)
-    // We want 1/(t |c|^2) > t. With t = 1/|lox_sqrt|, this gives
-    // |c / lox_sqrt| < 1.
-	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
-	check(absUB(horo_height_ratio_sqrt) < 1, where);
+void verify_indiscrete_lattice(char* where, char* word)
+{
+    // Conditions checked:
+    //  1) word(infinity_horoball) intersects infinity_horoball
+    //  2) at the points where the word is parabolic, it is not on the lattice
+    Box box(where);
+    Params<ACJ> params = box.cover();
+	SL2ACJ w = construct_word(params, word);
+
+	check(large_horoball(w, params.loxodromic_sqrt), where);
+    
+    // For all parabolic points in the box, we want verify
+    // that none of them are lattice points. At such a point, the parabolic
+    // translation will be given as +/- w.b.
+    //
+    // We check the box is small enough to determine the sign.
+    check(absUB(w.d) < 1 || -1 < absLB(w.d), where);
+    
+    ACJ translation = (absUB(w.d) < 1) ? -w.b : w.b;
+
+    // There are now 4 equations to check corresponding to the intersection
+    // of 4 cirles :
+    // |translation - 0          | < |1 + lattice|
+    // |translation - (1+lattice)| < |1 + lattice|
+    // |translation - lattice    | < |1 - lattice|
+    // |translation - 1          | < |1 - lattice|
+    // These inequailties show that transltion is not on the lattice (assuming
+    // parameterd space constraitns). See proof in text.
+    // 
+    // To make the computation efficient, rearange and take absolute values at the end.
+    ACJ one(1);
+    ACJ lattice = params.lattice;
+
+    ACJ d1 = translation / (lattice + one);
+    ACJ d2 = one - d1; // uses fewer operations
+    ACJ d3 = (translation - lattice  ) / (lattice - one);
+    ACJ d4 = (translation - one      ) / (lattice - one);
+
+    check(absUB(d1) < 1 && absUB(d2) < 1 && absUB(d3) < 1 && absUB(d4) < 1, where);
 }
 
 // TODO: FINISH and move to a codes file
@@ -123,9 +164,8 @@ void verify_impossible(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
-	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
 
-	check(absUB(horo_height_ratio_sqrt) < 1, where);
+	check(large_horoball(w, params.loxodromic_sqrt), where);
     // TODO FINISH
     fprintf(stderr, "verify: no implementation of checking impossible relator contradiction at %s\n", where);
 }
@@ -139,27 +179,10 @@ void verify_elliptic(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
-	check(absUB(horo_height_ratio_sqrt) < 1, where);
+	check(large_horoball(w, params.loxodromic_sqrt), where);
     // TODO FINISH
     fprintf(stderr, "verify: no implementation of checking elliptic contradiction at %s\n", where);
-}
-
-// TODO: FINISH and move to a codes file
-// Conditions checked:
-//  1) word(infinity_horoball) intersects infinity_horoball
-//  2) at the point where the word is parabolic, it is not on the lattice
-void verify_indiscrete_lattice(char* where, char* word)
-{
-    Box box(where);
-    Params<ACJ> params = box.cover();
-	SL2ACJ w = construct_word(params, word);
-	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
-
-	check(absUB(horo_height_ratio_sqrt) < 1, where);
-    // TODO FINISH
-    fprintf(stderr, "verify: no implementation of checking indiscrete lattice contradiction at %s\n", where);
 }
 
 // TODO: Move to a codes file
