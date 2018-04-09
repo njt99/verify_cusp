@@ -9,8 +9,8 @@ struct Box {
 	Params<XComplex> furthest() const; // furthest from 0
 	Params<XComplex> maximum() const; // maximizes all values
 private:
-	double centerDigits[6];
-	double sizeDigits[6];
+	double center_digits[6];
+	double size_digits[6];
     double box_center[6];
     double box_size[6];
     void compute_center_and_size();

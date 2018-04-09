@@ -1,4 +1,5 @@
 #include "Box.h"
+#include <stdlib.h>
 
 double scale[6];
 static bool scale_initialized = false; 
