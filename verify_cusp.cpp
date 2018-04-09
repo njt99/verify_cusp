@@ -156,8 +156,19 @@ void verify_indiscrete_lattice(char* where, char* word)
 
 // TODO: Move to a codes file
 // Conditions checked:
+//  1) the box is inside the variety neighborhood for giver word 
+void verify_variety(char* where, char* variety)
+{
+    Box box(where);
+	Params<ACJ> params = box.cover();
+    SL2ACJ w(construct_word(params, variety)); 
+    check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
+}
+
+// TODO: Move to a codes file
+// Conditions checked:
 //  1) the box is inside the variety neighborhood for all cyclic permutations of all provided variety words
-void verify_variety(char* where, char varieties[MAX_VAR][MAX_WORD_LEN], size_t var_count)
+void verify_varieties(char* where, char varieties[MAX_VAR][MAX_WORD_LEN], size_t var_count)
 {
     Box box(where);
 	Params<ACJ> params = box.cover();
@@ -237,9 +248,6 @@ void verify(char* where, size_t depth)
             parse_word(code);
             verify_indiscrete_lattice(where, code);
             break; } 
-        case 'F': { // Line has format F(word) quasi-relator that is no longer idenity. TODO: Verify this math once again.
-            fprintf(stderr, "verify: no implementation of checking indiscrete lattice contradiction at %s\n", where);
-            break; } 
         case 'H': { // Line has format HOLE VAR (word1,word2,...)
             // TODO: It is silly to check all of these, but that's what the data looks like right now. Once we finalize, we will only have one variety word per box
             char varieties[MAX_VAR][MAX_WORD_LEN];
@@ -255,7 +263,7 @@ void verify(char* where, size_t depth)
                 }
                 varieties[var_count++][word_len] = '\0';
             }
-            verify_variety(where, varieties, var_count);
+            verify_varieties(where, varieties, var_count);
             break; }
         default: {
             check(false, where);
