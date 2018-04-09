@@ -64,23 +64,28 @@ void verify_out_of_bounds(char* where, char bounds_code)
             check(nearest.parabolic.re > 0.5, where);
             break; } 
         case '6': {
-            Params<ACJ> cover(box.cover());
-            double absLS = absLB(cover.loxodromic_sqrt);
+            ACJ loxodromic_sqrt = box.cover().loxodromic_sqrt;
             // Area is |lox_sqrt|^2*|Im(lattice)|.
-            // Make nearest.lattice.im into an ACJ and then multiply twice by absLS 
-            double area = absLB( (ACJ(nearest.lattice.im) * absLS) * absLS );
+            double area = absLB( (loxodromic_sqrt * loxodromic_sqrt) * nearest.lattice.im);
             check(area > MAX_AREA, where);
             break;
         }
     }
 }
 
-//TODO: Move to SL2AJ
+// Check that the matrix is NOT of the forms
+// 1 b  OR  -1  b
+// 0 1       0 -1
+// anywhere in the box
 const int not_parabolic_at_inf(const SL2ACJ&x) {
     return absLB(x.c) > 0
         || ((absLB(x.a-1) > 0 ||  absLB(x.d-1) > 0) && (absLB(x.a+1) > 0 || absLB(x.d+1) > 0));
 }
 
+// Check that the matrix is NOT of the forms
+// 1 0  OR  -1  0
+// 0 1       0 -1
+// anywhere in the box
 const int not_identity(const SL2ACJ&x) {
     return absLB(x.b) > 0
         || absLB(x.c) > 0
@@ -89,21 +94,24 @@ const int not_identity(const SL2ACJ&x) {
 
 // TODO: Move to a codes file
 // Conditions checked:
-//  1) word(infinity_horoball) intersects infinity_horoball
-//  2) word is not a parabolic fixing infinity anywhere in the box
+//  1) word is not a parabolic fixing infinity anywhere in the box
+//  2) word(infinity_horoball) intersects infinity_horoball
 void verify_killed(char* where, char* word)
 {
     Box box(where);
     Params<ACJ> params = box.cover();
-	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
+	SL2ACJ w = construct_word(params, word);
 
-//    fprintf(stderr, "w.c %f\n", absUB(w.c)); 
-//    fprintf(stderr, "lox_sqrt %f\n", absLB(params.loxodromic_sqrt));
-//    fprintf(stderr, "ratio %f\n",absUB(horo_height_ratio_sqrt));
-
-	check(absUB(horo_height_ratio_sqrt) < 1, where);
     check(not_parabolic_at_inf(w), where);
+
+    // The infinity horoball has heigh t = 1/|lox_sqrt|. An SL2C matrix
+    // a b
+    // c d
+    // Takes an infinity horoball of height t to a horoball of height 1/(t |c|^2)
+    // We want 1/(t |c|^2) > t. With t = 1/|lox_sqrt|, this gives
+    // |c / lox_sqrt| < 1.
+	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
+	check(absUB(horo_height_ratio_sqrt) < 1, where);
 }
 
 // TODO: FINISH and move to a codes file
@@ -114,8 +122,8 @@ void verify_impossible(char* where, char* word)
 {
     Box box(where);
     Params<ACJ> params = box.cover();
-	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
+	SL2ACJ w = construct_word(params, word);
+	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
     // TODO FINISH
@@ -130,7 +138,7 @@ void verify_elliptic(char* where, char* word)
 {
     Box box(where);
     Params<ACJ> params = box.cover();
-	SL2ACJ w(construct_word(params, word));
+	SL2ACJ w = construct_word(params, word);
 	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
@@ -146,8 +154,8 @@ void verify_indiscrete_lattice(char* where, char* word)
 {
     Box box(where);
     Params<ACJ> params = box.cover();
-	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
+	SL2ACJ w = construct_word(params, word);
+	ACJ horo_height_ratio_sqrt = w.c / params.loxodromic_sqrt;
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
     // TODO FINISH
@@ -161,7 +169,7 @@ void verify_variety(char* where, char* variety)
 {
     Box box(where);
 	Params<ACJ> params = box.cover();
-    SL2ACJ w(construct_word(params, variety)); 
+    SL2ACJ w = construct_word(params, variety); 
     check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
 }
 
@@ -187,7 +195,7 @@ void verify_varieties(char* where, char varieties[MAX_VAR][MAX_WORD_LEN], size_t
             strncpy(var_word, rot_string+rot_idx, word_len);
             var_word[word_len] = '\0';
 
-            SL2ACJ w(construct_word(params, var_word)); 
+            SL2ACJ w = construct_word(params, var_word); 
             check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
         }
     }
