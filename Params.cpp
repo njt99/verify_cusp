@@ -5,7 +5,7 @@
 SL2ACJ construct_G(const Params<ACJ>& params)
 {
 	ACJ I(XComplex(0., 1.));
-	const ACJ& sl = params.loxodromicSqrt;
+	const ACJ& sl = params.loxodromic_sqrt;
 	return SL2ACJ(I*params.parabolic*sl, I/sl, I*sl, ACJ(0.));
 }
 

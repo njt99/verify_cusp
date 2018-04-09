@@ -40,10 +40,10 @@ void verify_out_of_bounds(char* where, char bounds_code)
 	Params<XComplex> maximum = box.maximum();
     switch(bounds_code) {
         case '0': {
-            check(absUB(furthest.loxodromicSqrt) < 1.0, where);
+            check(absUB(furthest.loxodromic_sqrt) < 1.0, where);
             break; } 
         case '1': {
-            check(maximum.loxodromicSqrt.im < 0.0
+            check(maximum.loxodromic_sqrt.im < 0.0
              || maximum.lattice.im < 0.0
              || maximum.parabolic.im < 0.0
              || maximum.parabolic.re < 0.0, where);
@@ -57,7 +57,7 @@ void verify_out_of_bounds(char* where, char bounds_code)
         case '4': {
             // Note: we can exclude the box if and only if the parabolic imag part is
             // bigger than half the lattice imag part over the WHOLE box
-            // We assume that case 1 has been tested. Multiplication by 0.5 is EXACT (if no underflow or overflow)
+            // Multiplication by 0.5 is EXACT (if no underflow or overflow)
             check(nearest.parabolic.im > 0.5*furthest.lattice.im, where);
             break; } 
         case '5': {
@@ -65,9 +65,10 @@ void verify_out_of_bounds(char* where, char bounds_code)
             break; } 
         case '6': {
             Params<ACJ> cover(box.cover());
-            double absLS = absLB(cover.loxodromicSqrt);
-            double area = dec_d(dec_d(absLS * absLS) * nearest.lattice.im);
-
+            double absLS = absLB(cover.loxodromic_sqrt);
+            // Area is |lox_sqrt|^2*|Im(lattice)|.
+            // Make nearest.lattice.im into an ACJ and then multiply twice by absLS 
+            double area = absLB( (ACJ(nearest.lattice.im) * absLS) * absLS );
             check(area > MAX_AREA, where);
             break;
         }
@@ -95,10 +96,10 @@ void verify_killed(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromicSqrt);
+	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
 //    fprintf(stderr, "w.c %f\n", absUB(w.c)); 
-//    fprintf(stderr, "lox_sqrt %f\n", absLB(params.loxodromicSqrt));
+//    fprintf(stderr, "lox_sqrt %f\n", absLB(params.loxodromic_sqrt));
 //    fprintf(stderr, "ratio %f\n",absUB(horo_height_ratio_sqrt));
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
@@ -114,7 +115,7 @@ void verify_impossible(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromicSqrt);
+	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
     // TODO FINISH
@@ -130,7 +131,7 @@ void verify_elliptic(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromicSqrt);
+	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
     // TODO FINISH
@@ -146,7 +147,7 @@ void verify_indiscrete_lattice(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w(construct_word(params, word));
-	ACJ horo_height_ratio_sqrt(w.c / params.loxodromicSqrt);
+	ACJ horo_height_ratio_sqrt(w.c / params.loxodromic_sqrt);
 
 	check(absUB(horo_height_ratio_sqrt) < 1, where);
     // TODO FINISH
