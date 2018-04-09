@@ -11,7 +11,7 @@
 #line 21 "ACJ.w"
 
 struct ACJ{
-ACJ(const XComplex&ff,const XComplex&ff0= 0,
+ACJ(const XComplex&ff= 0,const XComplex&ff0= 0,
 const XComplex&ff1= 0,const XComplex&ff2= 0,double err= 0)
 :f(ff),f0(ff0),f1(ff1),f2(ff2),e(err),
 size((1+2*EPS)*(absUB(ff0)+(absUB(ff1)+absUB(ff2))))

@@ -5,10 +5,6 @@
 /*10:*/
 #line 62 "roundoff.w"
 
-#ifndef __sparc__
-inline double infinity(){return 1.0/0.0;}
-#endif
-
 #ifdef sgi
 #include <sys/fpu.h>
 

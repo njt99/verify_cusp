@@ -24,8 +24,8 @@ extern"C"{
 void initialize_roundoff();
 int roundoff_ok();
 #ifndef __sparc__
-extern double infinity();
-#endif 
+inline double infinity(){return 1.0/0.0;}
+#endif
 #ifdef __GNUG__
 }
 #endif 
