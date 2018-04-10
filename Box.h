@@ -5,9 +5,9 @@
 struct Box {
 	Box(char* where);
 	Params<ACJ> cover() const;
-	Params<XComplex> nearest() const; // returns closest to 0 or 0 if box overlaps
-	Params<XComplex> furthest() const; // furthest from 0
-	Params<XComplex> maximum() const; // maximizes all values
+	Params<XComplex> nearer() const; // returns all values closer to 0 than in box or 0 if box overlaps
+	Params<XComplex> further() const; // returns all values futher from 0 that in the box
+	Params<XComplex> greater() const; // returns all values greater than in the box
 private:
 	double center_digits[6];
 	double size_digits[6];

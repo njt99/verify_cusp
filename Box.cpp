@@ -74,29 +74,38 @@ Params<ACJ> Box::cover() const
 	return result;
 }
 
-Params<XComplex> Box::nearest() const
+Params<XComplex> Box::nearer() const
 {
 	double m[6];
-    double temp;
 	for (int i = 0; i < 6; ++i) {
-		if (center_digits[i] < 0) {
-            // GMT paper page 419 of Annals
-            // temp is guaranteed to be >= than true_center + true_size
-            temp = box_center[i]+box_size[i];
-            if (temp > 0 ) { // Check if we have overlapped 0
-                m[i] = 0;
-            } else { // We know scale is positive
-		    	m[i] = temp;
-            }  
-        } else {
-            // GMT paper page 419 of Annals
-            // temp is guaranteed to be <= than true_center - true_size
-            temp = box_center[i]-box_size[i];
-            if (temp < 0 ) { // Check if we have overlapped 0
-                m[i] = 0;
-            } else { // We know scale is positive
-		    	m[i] = temp;
-            }  
+        m[i] = 0; // inconclusive cases
+        if (center_digits[i] > 0 && 
+            center_digits[i] > size_digits[i] && 
+            box_center[i]    > box_size[i]) {
+            // Want lower bound on true_center - true_size.  Assume no overflow or underflow 
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      box_center - box_size <= true_center - true_size
+            // Now, in machine arthimetric, by IEEE, if 
+            //      box_center > box_size then box_center (-) box_size >= 0.
+            // Lemma 7 gives,
+            //      (1-EPS)(*)( box_center (-) box_size ) <= box_center - box_size <= true_center - box_size. 
+            m[i] = (1-EPS)*(box_center[i] - box_size[i]);
+        } else if (center_digits[i] < 0 &&
+                   center_digits[i] < -size_digits[i] &&
+                   box_center[i]    < -box_size[i]) { 
+            // Want upper bound on true_center - true_size.  Assume no overflow or underflow
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      true_center + true_size <= box_center + box_size
+            // Now, in machine arthimetric, by IEEE, if 
+            //      -box_center > box_size then (-box_center) (-) box_size >= 0.
+            // Lemma 7 gives,
+            //      (1-EPS)(*)( (-box_center) (-) box_size ) <= -box_center - box_size <= -true_center - true_size.
+            // So,
+            //      -((1-EPS)(*)( (-box_center) (-) box_size )) >= true_center + true_size.
+            // Note, negation is exact for machine numbers
+            m[i] = -((1-EPS)*((-box_center[i]) - box_size[i]));
         }
 	}
 	
@@ -107,17 +116,31 @@ Params<XComplex> Box::nearest() const
 	return result;
 }
 
-Params<XComplex> Box::furthest() const
+Params<XComplex> Box::further() const
 {
 	double m[6];
 	for (int i = 0; i < 6; ++i) {
-		if (center_digits[i] < 0) {
-            // GMT paper page 419 of Annals
-            // guaranteed to be <= than true_center - true_size
-		    m[i] = box_center[i]-box_size[i];
+        m[i] = 0; // inconclusive cases
+		if (center_digits[i] > -size_digits[i]) {
+            // Want upper bound of true_center + true_size. Assume no overflow or underflow
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      true_center + true_size <= box_center + box_size
+            // By IEEE (+) and (-) resepct <= and >=, so box_center (+) box_size >=0 and
+            // Lemma 7 for floating point arithmetic gives and upper bound
+            //      (1+EPS)(*)(box_center (+) box_size) >= box_center + box_size >= true_center + true_size
+		    m[i] = (1+EPS)*(box_center[i] + box_size[i]);
         } else {
-            // guaranteed to be >= than true_center + true_size
-		    m[i] = box_center[i]+box_size[i];
+            // Want lower bound of true_center - true_size. Assume no overflow or underflow
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      box_center - box_size <= true_center - true_size
+            // By IEEE, (+) and (-) respects <= and >=, and negation is exact.
+            // Thus, (-box_center) (+) box_size >=0 and Lemma 7 for floating point arithmetic gives
+            //        (1+EPS)(*)( (-box_center) (+) box_size) ) >= (-box_center) + box_size
+            // So,
+            //      -((1+EPS)(*)( (-box_center) (+) box_size) ))<= box_center - box_size <= true_center - true_size
+            m[i] = -((1+EPS)*((-box_center[i]) + box_size[i]));
         }
 	}
 	
@@ -128,14 +151,35 @@ Params<XComplex> Box::furthest() const
 	return result;
 }
 
-// Note: size_digits is always positive
-Params<XComplex> Box::maximum() const
+Params<XComplex> Box::greater() const
 {
 	double m[6];
 	for (int i = 0; i < 6; ++i) {
-        // GMT paper page 419 of Annals
-        // guaranteed to be >= than true_center + true_size
-        m[i] = box_center[i]+box_size[i];
+        m[i] = 0; // inconclusive cases
+		if (center_digits[i] > -size_digits[i]) {
+            // Want upper bound of true_center + true_size. Assume no overflow or underflow
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      true_center + true_size <= box_center + box_size.
+            // Notice that box_center + box_size >= true_center + true_size > 0.
+            // By IEEE, box_center (+) box_size >=0, as it's guanrateed to evaluate to nearest representable.
+            // Lemma 7 for floating point arithmetic gives and upper bound
+            //      (1+EPS)(*)(box_center (+) box_size) >= box_center + box_size >= true_center + true_size
+		    m[i] = (1+EPS)*(box_center[i] + box_size[i]);
+        } else if (center_digits[i] < -size_digits[i] &&
+                   box_center[i]    < -box_size[i]) {
+            // Want upper bound of true_center + true_size. Assume no overflow or underflow
+            // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
+            // GMT paper page 419 of Annals gives with true arithmetic
+            //      true_center + true_size <= box_center + box_size.
+            // Notice that box_center + box_size < 0.
+            // By IEEE, box_center (+) box_size <= 0, as it's guanrateed to evaluate to nearest representable.
+            // Lemma 7 for floating point arithmetic gives a bound
+            //      (1-EPS)(*)| box_center (+) box_size | < | box_center + box_size |
+            // So,
+            //      -((1-EPS)(*)(-(box_center (+) box_size))) >= box_center + box_size >= true_center + true_size
+            m[i] = -((1-EPS)*(-(box_center[i] + box_size[i])));
+        }
 	}
 	
 	Params<XComplex> result;

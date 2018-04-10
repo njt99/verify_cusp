@@ -19,6 +19,16 @@ void check(int inequalities, char* where)
     }
 }
 
+inline const double areaLB(const XComplex&lox_sqrt, const double&lat_im)
+{
+    // Area is |lox_sqrt|^2*|Im(lattice)|.
+    // Apply Lemma 7 of GMT.
+    double lox_re = (1-EPS)*(lox_sqrt.re*lox_sqrt.re);
+    double lox_im = (1-EPS)*(lox_sqrt.im*lox_sqrt.im);
+    double lox_norm = (1-EPS)*(lox_re + lox_im);
+    return (1-EPS)*(lox_norm*lat_im);
+}
+
 // Our compact parameter space has the following bounds:
 // 0. |lox_sqrt| >= 1 
 // 1. 
@@ -34,38 +44,36 @@ void check(int inequalities, char* where)
 void verify_out_of_bounds(char* where, char bounds_code)
 {
     Box box(where);
-	Params<XComplex> nearest = box.nearest();
-	Params<XComplex> furthest = box.furthest();
-	Params<XComplex> maximum = box.maximum();
+	Params<XComplex> nearer = box.nearer();
+	Params<XComplex> further = box.further();
+	Params<XComplex> greater = box.greater();
     switch(bounds_code) {
         case '0': {
-            check(absUB(furthest.loxodromic_sqrt) < 1.0, where);
+            check(absUB(further.loxodromic_sqrt) < 1, where);
             break; } 
         case '1': {
-            check(maximum.loxodromic_sqrt.im < 0.0
-             || maximum.lattice.im < 0.0
-             || maximum.parabolic.im < 0.0
-             || maximum.parabolic.re < 0.0, where);
+            check(greater.loxodromic_sqrt.im < 0
+             || greater.lattice.im < 0
+             || greater.parabolic.im < 0
+             || greater.parabolic.re < 0, where);
             break; } 
         case '2': {
-            check(fabs(nearest.lattice.re) > 0.5, where);
+            check(fabs(nearer.lattice.re) > 0.5, where);
             break; } 
         case '3': {
-            check(absUB(furthest.lattice) < 1, where);
+            check(absUB(further.lattice) < 1, where);
             break; } 
         case '4': {
             // Note: we can exclude the box if and only if the parabolic imag part is
             // bigger than half the lattice imag part over the WHOLE box
             // Multiplication by 0.5 is EXACT (if no underflow or overflow)
-            check(nearest.parabolic.im > 0.5*furthest.lattice.im, where);
+            check(nearer.parabolic.im > 0.5*further.lattice.im, where);
             break; } 
         case '5': {
-            check(nearest.parabolic.re > 0.5, where);
+            check(nearer.parabolic.re > 0.5, where);
             break; } 
         case '6': {
-            ACJ loxodromic_sqrt = box.cover().loxodromic_sqrt;
-            // Area is |lox_sqrt|^2*|Im(lattice)|.
-            double area = absLB( (loxodromic_sqrt * loxodromic_sqrt) * nearest.lattice.im);
+            double area = areaLB(nearer.loxodromic_sqrt, nearer.lattice.im);
             check(area > MAX_AREA, where);
             break;
         }
