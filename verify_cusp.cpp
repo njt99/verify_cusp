@@ -132,6 +132,7 @@ void verify_indiscrete_lattice(char* where, char* word)
     Box box(where);
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
+    double one = 1; // Exact
 
 	check(large_horoball(w, params), where);
     
@@ -140,27 +141,27 @@ void verify_indiscrete_lattice(char* where, char* word)
     // translation will be given as +/- w.b.
     //
     // We check the box is small enough to determine the sign.
-    check(absUB(w.d) < 1 || -1 < absLB(w.d), where);
+    check(absUB(w.d - one) < 2 || absUB(w.d + one) < 2 || 
+          absUB(w.a - one) < 2 || absUB(w.a + one) < 2, where);
     
-    ACJ translation = (absUB(w.d) < 1) ? -w.b : w.b;
+    ACJ T = (absUB(w.d - one) < 2 || absUB(w.a - one) < 2) ? w.b : -w.b;
+    ACJ L = params.lattice;
 
     // There are now 4 equations to check corresponding to the intersection
     // of 4 cirles :
     // |translation - 0          | < |1 + lattice|
     // |translation - (1+lattice)| < |1 + lattice|
-    // |translation - lattice    | < |1 - lattice|
     // |translation - 1          | < |1 - lattice|
+    // |translation - lattice    | < |1 - lattice|
     // These inequailties show that transltion is not on the lattice (assuming
     // parameterd space constraitns). See proof in text.
     // 
     // To make the computation efficient, rearange and take absolute values at the end.
-    ACJ one(1);
-    ACJ lattice = params.lattice;
 
-    ACJ d1 = translation / (lattice + one);
-    ACJ d2 = one - d1; // uses fewer operations
-    ACJ d3 = (translation - lattice  ) / (lattice - one);
-    ACJ d4 = (translation - one      ) / (lattice - one);
+    ACJ d1 = T / (L + one);
+    ACJ d2 = d1 - one; // uses fewer operations
+    ACJ d3 = (T - one) / (L - one);
+    ACJ d4 = d3 - one; // better error estimate
 
     check(absUB(d1) < 1 && absUB(d2) < 1 && absUB(d3) < 1 && absUB(d4) < 1, where);
 }
