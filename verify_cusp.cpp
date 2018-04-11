@@ -99,14 +99,14 @@ const int not_identity(const SL2ACJ&x) {
         || ((absLB(x.a-1) > 0 || absLB(x.d-1) > 0) && (absLB(x.a+1) > 0 || absLB(x.d+1) > 0));
 }
 
-const int large_horoball(const SL2ACJ&x, const ACJ&loxodromic_sqrt) {
+const int large_horoball(const SL2ACJ&x, const Params<ACJ>&p) {
     // The infinity horoball has height t = 1/|loxodromic_sqrt|. An SL2C matrix
     // a b
     // c d
     // Takes an infinity horoball of height t to a horoball of height 1/(t |c|^2)
     // We want 1/(t |c|^2) > t. With t = 1/|loxodromic_sqrt|, this gives
     // |c / loxodromic_sqrt| < 1.
-    return absUB( x.c / loxodromic_sqrt ) < 1;
+    return absUB( x.c / p.loxodromic_sqrt ) < 1;
 }
 
 void verify_killed(char* where, char* word)
@@ -119,7 +119,7 @@ void verify_killed(char* where, char* word)
 	SL2ACJ w = construct_word(params, word);
 
     check(not_parabolic_at_inf(w), where);
-	check(large_horoball(w, params.loxodromic_sqrt), where);
+	check(large_horoball(w, params), where);
 }
 
 void verify_indiscrete_lattice(char* where, char* word)
@@ -131,7 +131,7 @@ void verify_indiscrete_lattice(char* where, char* word)
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
 
-	check(large_horoball(w, params.loxodromic_sqrt), where);
+	check(large_horoball(w, params), where);
     
     // For all parabolic points in the box, we want verify
     // that none of them are lattice points. At such a point, the parabolic
@@ -173,7 +173,7 @@ void verify_impossible(char* where, char* word)
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
 
-	check(large_horoball(w, params.loxodromic_sqrt), where);
+	check(large_horoball(w, params), where);
     // TODO FINISH
     fprintf(stderr, "verify: no implementation of checking impossible relator contradiction at %s\n", where);
 }
@@ -188,7 +188,7 @@ void verify_elliptic(char* where, char* word)
     Params<ACJ> params = box.cover();
 	SL2ACJ w = construct_word(params, word);
 
-	check(large_horoball(w, params.loxodromic_sqrt), where);
+	check(large_horoball(w, params), where);
     // TODO FINISH
     fprintf(stderr, "verify: no implementation of checking elliptic contradiction at %s\n", where);
 }
