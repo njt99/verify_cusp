@@ -19,9 +19,11 @@ void check(int inequalities, char* where)
     }
 }
 
-inline const double areaLB(const XComplex&lox_sqrt, const double&lat_im)
+inline const double areaLB(const Params<XComplex>&nearer)
 {
     // Area is |lox_sqrt|^2*|Im(lattice)|.
+    XComplex lox_sqrt = nearer.loxodromic_sqrt;
+    double lat_im     = nearer.lattice.im;
     // Apply Lemma 7 of GMT.
     double lox_re = (1-EPS)*(lox_sqrt.re*lox_sqrt.re);
     double lox_im = (1-EPS)*(lox_sqrt.im*lox_sqrt.im);
@@ -73,7 +75,7 @@ void verify_out_of_bounds(char* where, char bounds_code)
             check(nearer.parabolic.re > 0.5, where);
             break; } 
         case '6': {
-            double area = areaLB(nearer.loxodromic_sqrt, nearer.lattice.im);
+            double area = areaLB(nearer);
             check(area > MAX_AREA, where);
             break;
         }

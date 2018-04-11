@@ -79,9 +79,9 @@ Params<XComplex> Box::nearer() const
 	double m[6];
 	for (int i = 0; i < 6; ++i) {
         m[i] = 0; // inconclusive cases
-        if (center_digits[i] > 0 && 
-            center_digits[i] > size_digits[i] && 
-            box_center[i]    > box_size[i]) {
+        if (center_digits[i] > 0 && // center is positive 
+            center_digits[i] > size_digits[i] &&  // true diff is positive
+            box_center[i]    > box_size[i]) { // machine diff is >= 0
             // Want lower bound on true_center - true_size.  Assume no overflow or underflow 
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
             // GMT paper page 419 of Annals gives with true arithmetic
@@ -91,9 +91,9 @@ Params<XComplex> Box::nearer() const
             // Lemma 7 gives,
             //      (1-EPS)(*)( box_center (-) box_size ) <= box_center - box_size <= true_center - box_size. 
             m[i] = (1-EPS)*(box_center[i] - box_size[i]);
-        } else if (center_digits[i] < 0 &&
-                   center_digits[i] < -size_digits[i] &&
-                   box_center[i]    < -box_size[i]) { 
+        } else if (center_digits[i] < 0 && // center is negative
+                   center_digits[i] < -size_digits[i] && // true sum is negative
+                   box_center[i]    < -box_size[i]) {  // machine sum is negative
             // Want upper bound on true_center - true_size.  Assume no overflow or underflow
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
             // GMT paper page 419 of Annals gives with true arithmetic
@@ -121,7 +121,7 @@ Params<XComplex> Box::further() const
 	double m[6];
 	for (int i = 0; i < 6; ++i) {
         m[i] = 0; // inconclusive cases
-		if (center_digits[i] > -size_digits[i]) {
+		if (center_digits[i] > -size_digits[i]) { // true sum is positive 
             // Want upper bound of true_center + true_size. Assume no overflow or underflow
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
             // GMT paper page 419 of Annals gives with true arithmetic
@@ -130,7 +130,7 @@ Params<XComplex> Box::further() const
             // Lemma 7 for floating point arithmetic gives and upper bound
             //      (1+EPS)(*)(box_center (+) box_size) >= box_center + box_size >= true_center + true_size
 		    m[i] = (1+EPS)*(box_center[i] + box_size[i]);
-        } else {
+        } else { // true sum is <= 0
             // Want lower bound of true_center - true_size. Assume no overflow or underflow
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0 
             // GMT paper page 419 of Annals gives with true arithmetic
@@ -156,7 +156,7 @@ Params<XComplex> Box::greater() const
 	double m[6];
 	for (int i = 0; i < 6; ++i) {
         m[i] = 0; // inconclusive cases
-		if (center_digits[i] > -size_digits[i]) {
+		if (center_digits[i] > -size_digits[i]) { // true sum is positive
             // Want upper bound of true_center + true_size. Assume no overflow or underflow
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
             // GMT paper page 419 of Annals gives with true arithmetic
@@ -166,8 +166,8 @@ Params<XComplex> Box::greater() const
             // Lemma 7 for floating point arithmetic gives and upper bound
             //      (1+EPS)(*)(box_center (+) box_size) >= box_center + box_size >= true_center + true_size
 		    m[i] = (1+EPS)*(box_center[i] + box_size[i]);
-        } else if (center_digits[i] < -size_digits[i] &&
-                   box_center[i]    < -box_size[i]) {
+        } else if (center_digits[i] < -size_digits[i] && // true sum is negative
+                   box_center[i]    < -box_size[i]) { // machine sum is <= 0
             // Want upper bound of true_center + true_size. Assume no overflow or underflow
             // Note, sign(center_digits) == sign(box_center), unless box_center == 0. Also, box_size is always >= 0. 
             // GMT paper page 419 of Annals gives with true arithmetic
