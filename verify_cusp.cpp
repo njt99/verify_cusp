@@ -124,6 +124,62 @@ void verify_killed(char* where, char* word)
 	check(large_horoball(w, params), where);
 }
 
+// Conditions checked:
+//  1) the box is inside the variety neighborhood for giver word 
+void verify_variety(char* where, char* variety)
+{
+    Box box(where);
+	Params<ACJ> params = box.cover();
+    SL2ACJ w = construct_word(params, variety); 
+    check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
+}
+
+// Conditions checked:
+//  1) word(infinity_horoball) intersects infinity_horoball
+//  2) word cannot be a parabolic fixing infinity
+void verify_parabolic_impossible(char* where, char* word)
+{
+    Box box(where);
+    Params<ACJ> params = box.cover();
+	SL2ACJ w = construct_word(params, word);
+
+	check(large_horoball(w, params), where);
+
+    // TODO Finish -- load file of impossible parabolics
+    fprintf(stderr, "verify: no implementation of checking impossible parabolic contradiction at %s\n", where);
+}
+
+// Conditions checked:
+//  1) word(infinity_horoball) intersects infinity_horoball
+//  2) if word is a parabolic fixinig infinity, it must be the idenity
+//  3) word cannot be a identity
+void verify_identity_impossible(char* where, char* word)
+{
+    Box box(where);
+    Params<ACJ> params = box.cover();
+	SL2ACJ w = construct_word(params, word);
+
+	check(large_horoball(w, params), where);
+	check(absUB(w.b) < 1, where);
+
+    // TODO Finish -- load file of impossible parabolics
+    fprintf(stderr, "verify: no implementation of checking impossible identity contradiction at %s\n", where);
+}
+
+// Conditions checked:
+//  1) word(infinity_horoball) intersects infinity_horoball
+//  2) if word is a parabolic fixinig infinity, it must be the idenity
+//  3) word is not the idenity
+void verify_not_identity(char* where, char* word)
+{
+    Box box(where);
+    Params<ACJ> params = box.cover();
+	SL2ACJ w = construct_word(params, word);
+
+	check(large_horoball(w, params), where);
+	check(absUB(w.b) < 1, where);
+    check(not_identity(w), where);
+}
 void verify_indiscrete_lattice(char* where, char* word)
 {
     // Conditions checked:
@@ -166,76 +222,22 @@ void verify_indiscrete_lattice(char* where, char* word)
     check(absUB(d1) < 1 && absUB(d2) < 1 && absUB(d3) < 1 && absUB(d4) < 1, where);
 }
 
-// TODO: FINISH and move to a codes file
 // Conditions checked:
-//  1) word(infinity_horoball) intersects infinity_horoball
-//  2) word cannot be a parabolic fixing infinity
-void verify_impossible(char* where, char* word)
+//  1) power is power of the elliptic as words TODO
+//  2) power(infinity_horoball) intersects infinity_horoball
+//  3) elliptic is never parabolic in the box 
+void verify_parabolic_power(char* where, char* elliptic, char * power)
 {
+    // TODO : check that ellipic^k == power as words. Might be easier to have a list of pairs
     Box box(where);
     Params<ACJ> params = box.cover();
-	SL2ACJ w = construct_word(params, word);
+	SL2ACJ p = construct_word(params, power);
+	SL2ACJ e = construct_word(params, elliptic);
 
-	check(large_horoball(w, params), where);
-    // TODO FINISH
-    fprintf(stderr, "verify: no implementation of checking impossible relator contradiction at %s\n", where);
+	check(large_horoball(p, params), where);
+    check(not_parabolic_at_inf(e), where);
 }
 
-// TODO: FINISH and move to a codes file
-// Conditions checked:
-//  1) word(infinity_horoball) intersects infinity_horoball
-//  2) at point where the word is parabolic (or identity) a subword must be elliptic
-void verify_elliptic(char* where, char* word)
-{
-    Box box(where);
-    Params<ACJ> params = box.cover();
-	SL2ACJ w = construct_word(params, word);
-
-	check(large_horoball(w, params), where);
-    // TODO FINISH
-    fprintf(stderr, "verify: no implementation of checking elliptic contradiction at %s\n", where);
-}
-
-// TODO: Move to a codes file
-// Conditions checked:
-//  1) the box is inside the variety neighborhood for giver word 
-void verify_variety(char* where, char* variety)
-{
-    Box box(where);
-	Params<ACJ> params = box.cover();
-    SL2ACJ w = construct_word(params, variety); 
-    check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
-}
-
-// TODO: Move to a codes file
-// Conditions checked:
-//  1) the box is inside the variety neighborhood for all cyclic permutations of all provided variety words
-void verify_varieties(char* where, char varieties[MAX_VAR][MAX_WORD_LEN], size_t var_count)
-{
-    Box box(where);
-	Params<ACJ> params = box.cover();
-    
-    char var_word[MAX_WORD_LEN];
-    char rot_string[2*MAX_WORD_LEN];
-    size_t var_idx;
-    size_t rot_idx;
-    size_t word_len;
-    for (var_idx = 0; var_idx < var_count; ++var_idx) {
-        word_len = strlen(varieties[var_idx]); 
-        strncpy(rot_string, varieties[var_idx], MAX_WORD_LEN);    
-        strncpy(rot_string+word_len, varieties[var_idx], MAX_WORD_LEN);    
-
-        for (rot_idx = 0; rot_idx < word_len; ++rot_idx) {
-            strncpy(var_word, rot_string+rot_idx, word_len);
-            var_word[word_len] = '\0';
-
-            SL2ACJ w = construct_word(params, var_word); 
-            check((absUB(w.c) < 1 && absUB(w.b) < 1), where);
-        }
-    }
-}
-
-// TODO: Move to a codes file
 void parse_word(char* code)
 {
     char buf[MAX_CODE_LEN];
@@ -253,7 +255,7 @@ void verify(char* where, size_t depth)
 
     // TODO: Make a conditional list file and update the tree with conditions
     char code[MAX_CODE_LEN];
-    fgets(code,MAX_CODE_LEN,stdin);
+    fgets(code,MAX_CODE_LEN, stdin);
 //    printf("%s CODE %s\n", where, code);
     switch(code[0]) {
         case 'X': { 
@@ -273,40 +275,38 @@ void verify(char* where, size_t depth)
         case '6': {
             verify_out_of_bounds(where, code[0]);
             break; }
-        case 'K': { // Line has format  K(word) killer word
+        case 'K': { // Line has format  K(word) - killer word
             parse_word(code);
             verify_killed(where, code);
             break; }
-        // TODO: Simplify these cases or simplify their proof
-        case 'I': { // Line has format I(word) impossible power
+        case 'V': { // Line has format V(word) - box in variety nhd
             parse_word(code);
-            verify_impossible(where, code);
-            break; } 
-        case 'E': { // Line has format E(word) elliptic element
+            verify_variety(where, code);
+            break; }
+        case 'P': { // Line has format P(word) - word cannot be parabolic
             parse_word(code);
-            verify_elliptic(where, code);
+            verify_parabolic_impossible(where, code);
             break; } 
-        case 'L': { // Line has format L(word) indiscrete lattice
+        case 'I': { // Line has format I(word) - absUB(w.b) < 1 but word can't be identity 
+            parse_word(code);
+            verify_identity_impossible(where, code);
+            break; }
+        case 'Q': { // Line has format I(word) - absUB(w.b) < 1 and word isn't the idenity 
+            parse_word(code);
+            verify_not_identity(where, code);
+            break; }
+        case 'L': { // Line has format L(word) - all parabolics indiscrete
             parse_word(code);
             verify_indiscrete_lattice(where, code);
             break; } 
-        case 'H': { // Line has format HOLE VAR (word1,word2,...)
-            // TODO: It is silly to check all of these, but that's what the data looks like right now. Once we finalize, we will only have one variety word per box
-            char varieties[MAX_VAR][MAX_WORD_LEN];
-            size_t idx = 0;
-            size_t var_count = 0;
-            while(code[idx] != '(') { ++idx ;}
-            while(code[idx] != ')') {
-                ++idx;
-                size_t word_len = 0;
-                while(code[idx] != ',' && code[idx] != ')') { 
-                    varieties[var_count][word_len++] = code[idx];
-                    ++idx;
-                }
-                varieties[var_count++][word_len] = '\0';
-            }
-            verify_varieties(where, varieties, var_count);
-            break; }
+        case 'E': { // Line has format E(word) - 
+            parse_word(code);
+            char * comma = strchr(code,',');
+            char * elliptic = comma + 1;
+            char * power = code;
+            comma[0] = '\0'; 
+            verify_parabolic_power(where, elliptic, power);
+            break; } 
         default: {
             check(false, where);
         }
